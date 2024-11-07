@@ -10,6 +10,17 @@
 
 using namespace std::chrono_literals;
 
+int budazhapova_e_count_freq_character_mpi::counting_freq(std::string str) {
+  char symb = str[0];
+  int res = 0;
+  for (unsigned long i = 0; i < str.length(); i++) {
+    if (str[i] == symb) {
+      res++;
+    }
+  }
+  return res;
+}
+
 std::string budazhapova_e_count_freq_character_mpi::getRandomString(int length) {
   static std::string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
   std::string result;
@@ -23,13 +34,7 @@ std::string budazhapova_e_count_freq_character_mpi::getRandomString(int length) 
 
 bool budazhapova_e_count_freq_character_mpi::TestMPITaskSequential::pre_processing() {
   internal_order_test();
-
-  input_ = std::string(reinterpret_cast<char*>(taskData->inputs[0]);
-  auto* tmp_ptr = reinterpret_cast<int*>(taskData->inputs[0]);
-
-  for (unsigned i = 0; i < taskData->inputs_count[0]; i++) {
-    input_[i] = tmp_ptr[i];
-  }
+  input_ = std::string(reinterpret_cast<char*>(taskData->inputs[0]), taskData->inputs_count[0]);
   symb = input_[0];
   res = 0;
   return true;
@@ -37,18 +42,12 @@ bool budazhapova_e_count_freq_character_mpi::TestMPITaskSequential::pre_processi
 
 bool budazhapova_e_count_freq_character_mpi::TestMPITaskSequential::validation() {
   internal_order_test();
-
   return taskData->outputs_count[0] == 1;
 }
 
 bool budazhapova_e_count_freq_character_mpi::TestMPITaskSequential::run() {
   internal_order_test();
-
-  for (unsigned long i = 0; i < input_.length(); i++) {
-    if (input_[i] == symb) {
-      res++;
-    }
-  }
+  res = counting_freq(input_);
   return true;
 }
 
@@ -66,15 +65,15 @@ bool budazhapova_e_count_freq_character_mpi::TestMPITaskParallel::pre_processing
   if (world_rank == 0) {
     delta = taskData->inputs_count[0] / world.size();
   }
-  broadcast(world, delta, 0);
+  boost::mpi::broadcast(world, delta, 0);
 
   if (world_rank == 0) {
-    input_ = std::string(reinterpret_cast<char*>(taskData->inputs[0]);
+    input_ = std::string(reinterpret_cast<char*>(taskData->inputs[0]));
     auto* tmp_ptr = reinterpret_cast<char*>(taskData->inputs[0]);
     for (unsigned i = 0; i < taskData->inputs_count[0]; i++) {
       input_[i] = tmp_ptr[i];
     }
-    symb=input_[0];
+    symb = input_[0];
   }
   local_input_.resize(delta);
   if (world_rank == 0) {
@@ -86,8 +85,6 @@ bool budazhapova_e_count_freq_character_mpi::TestMPITaskParallel::pre_processing
     world.recv(0, 0, local_input_.data(), delta);
   }
   local_res = 0;
-  local_symb = local_input_[0];
-  res = 0;
   return true;
 }
 
@@ -101,12 +98,8 @@ bool budazhapova_e_count_freq_character_mpi::TestMPITaskParallel::validation() {
 
 bool budazhapova_e_count_freq_character_mpi::TestMPITaskParallel::run() {
   internal_order_test();
-  for (unsigned long i = 0; i < local_input_.length(); i++) {
-    if (local_input_[i] == local_symb) {
-      local_res++;
-    }
-  }
-  reduce(world, local_res, res, std::plus<>(), 0);
+  local_res = counting_freq(local_input_);
+  reduce(world, local_res, res, std::plus(), 0);
   return true;
 }
 
