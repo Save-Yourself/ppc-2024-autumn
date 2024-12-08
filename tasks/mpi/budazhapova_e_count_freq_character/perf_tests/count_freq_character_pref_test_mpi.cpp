@@ -8,17 +8,34 @@
 #include "core/perf/include/perf.hpp"
 #include "mpi/budazhapova_e_count_freq_character/include/count_freq_character_mpi_header.hpp"
 
+namespace budazhapova_e_count_freq_character_mpi {
+std::string getRandomString(int length) {
+  static std::string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+  std::string result;
+  result.resize(length);
+
+  srand(time(nullptr));
+  for (int i = 0; i < length; i++) result[i] = charset[rand() % charset.length()];
+
+  return result;
+}
+}  // namespace budazhapova_e_count_freq_character_mpi
+
 TEST(budazhapova_e_count_freq_character_mpi, test_pipeline_run) {
   boost::mpi::communicator world;
   std::string global_str;
-  std::vector<int> global_out(1, 0);
-  int size_string = 120;
+  const int size_string = 123456789;
   global_str = budazhapova_e_count_freq_character_mpi::getRandomString(size_string);
+  std::vector<int> global_out(1, 0);
+  char symb = 'a';
   // Create TaskData
+
   std::shared_ptr<ppc::core::TaskData> taskDataPar = std::make_shared<ppc::core::TaskData>();
   if (world.rank() == 0) {
     taskDataPar->inputs.emplace_back(reinterpret_cast<uint8_t*>(global_str.data()));
     taskDataPar->inputs_count.emplace_back(global_str.size());
+    taskDataPar->inputs.emplace_back(reinterpret_cast<uint8_t*>(&symb));
+    taskDataPar->inputs_count.emplace_back(1);
     taskDataPar->outputs.emplace_back(reinterpret_cast<uint8_t*>(global_out.data()));
     taskDataPar->outputs_count.emplace_back(global_out.size());
   }
@@ -50,15 +67,18 @@ TEST(budazhapova_e_count_freq_character_mpi, test_pipeline_run) {
 TEST(budazhapova_e_count_freq_character_mpi, test_task_run) {
   boost::mpi::communicator world;
   std::string global_str;
-  std::vector<int> global_out(1, 0);
-  int size_string = 120;
+  const int size_string = 123456789;
   global_str = budazhapova_e_count_freq_character_mpi::getRandomString(size_string);
+  std::vector<int> global_out(1, 0);
+  char symb = 'a';
 
   // Create TaskData
   std::shared_ptr<ppc::core::TaskData> taskDataPar = std::make_shared<ppc::core::TaskData>();
   if (world.rank() == 0) {
     taskDataPar->inputs.emplace_back(reinterpret_cast<uint8_t*>(global_str.data()));
     taskDataPar->inputs_count.emplace_back(global_str.size());
+    taskDataPar->inputs.emplace_back(reinterpret_cast<uint8_t*>(&symb));
+    taskDataPar->inputs_count.emplace_back(1);
     taskDataPar->outputs.emplace_back(reinterpret_cast<uint8_t*>(global_out.data()));
     taskDataPar->outputs_count.emplace_back(global_out.size());
   }
@@ -83,5 +103,6 @@ TEST(budazhapova_e_count_freq_character_mpi, test_task_run) {
   perfAnalyzer->task_run(perfAttr, perfResults);
   if (world.rank() == 0) {
     ppc::core::Perf::print_perf_statistic(perfResults);
+    ASSERT_EQ(123456789, global_out[0]);
   }
 }
