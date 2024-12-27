@@ -13,7 +13,7 @@
 
 namespace budazhapova_e_count_freq_character_mpi {
 
-std::string getRandomString(int length);
+int counting_freq(std::string str, char symb);
 
 class TestMPITaskSequential : public ppc::core::Task {
  public:
@@ -25,8 +25,8 @@ class TestMPITaskSequential : public ppc::core::Task {
 
  private:
   std::string input_;
-  int res{};
-  char symb{};
+  int res = 0;
+  char symb;
 };
 
 class TestMPITaskParallel : public ppc::core::Task {
@@ -39,9 +39,8 @@ class TestMPITaskParallel : public ppc::core::Task {
 
  private:
   std::string input_, local_input_;
-  int res{};
-  char symb{};
-  int local_res{};
+  int res = 0, local_res{};
+  char symb;
   boost::mpi::communicator world;
 };
 
