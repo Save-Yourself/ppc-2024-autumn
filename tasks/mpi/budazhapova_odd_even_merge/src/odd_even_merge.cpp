@@ -172,7 +172,7 @@ bool budazhapova_betcher_odd_even_merge_mpi::MergeParallel::run() {
 bool budazhapova_betcher_odd_even_merge_mpi::MergeParallel::post_processing() {
   internal_order_test();
   if (world.rank() == 0) {
-    res.budazhapova_betcher_odd_even_merge_mpi::radix_sort();
+    budazhapova_betcher_odd_even_merge_mpi::radix_sort(res);
     int* output = reinterpret_cast<int*>(taskData->outputs[0]);
     for (size_t i = 0; i < res.size(); i++) {
       output[i] = res[i];
