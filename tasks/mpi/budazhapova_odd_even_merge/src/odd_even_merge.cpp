@@ -44,7 +44,8 @@ void radix_sort(std::vector<int>& arr) {
 }
 void odd_even_merge(std::vector<int>& local_res, std::vector<int>& received_data) {
   std::vector<int> merged(local_res.size() + received_data.size());
-  std::merge(local_res.begin(), local_res.end(), received_data.begin(), received_data.end(), merged.begin());
+  std::copy(local_res.begin(), local_res.end(), merged.begin());
+  std::copy(received_data.begin(), received_data.end(), merged.begin() + local_res.size());
   budazhapova_betcher_odd_even_merge_mpi::radix_sort(merged);
   local_res.assign(merged.begin(), merged.begin() + local_res.size());
   received_data.assign(merged.begin() + local_res.size(), merged.end());
@@ -147,7 +148,6 @@ bool budazhapova_betcher_odd_even_merge_mpi::MergeParallel::run() {
       }
       if (world_rank % 2 == 0 && next_rank < world_size) {
         world.recv(next_rank, next_rank, local_res);
-        budazhapova_betcher_odd_even_merge_mpi::radix_sort(local_res);
       }
     } else {
       if (world_rank % 2 == 1 && next_rank < world_size) {
@@ -160,7 +160,6 @@ bool budazhapova_betcher_odd_even_merge_mpi::MergeParallel::run() {
       }
       if (world_rank % 2 == 1 && next_rank < world_size) {
         world.recv(next_rank, next_rank, local_res);
-        budazhapova_betcher_odd_even_merge_mpi::radix_sort(local_res);
       }
     }
   }
